@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. --><project basedir="." default="build" name="interpretejs">
+    <property environment="env"/>
+    <property name="junit.output.dir" value="junit"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
+    <path id="interpretejs.classpath">
+        <pathelement location="lib/java-cup-11b-runtime.jar"/>
+        <pathelement location="bin"/>
+        <pathelement location="lib/JFlex.jar"/>
+        <pathelement location="test_lib/junit.jar"/>
+        <pathelement location="test_lib/org.hamcrest.core_1.3.0.v201303031735.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+                <exclude name="**/*.lex"/>
+                <exclude name="**/*.cup"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="test">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+                <exclude name="**/*.lex"/>
+                <exclude name="**/*.cup"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="src"/>
+            <src path="test"/>
+            <exclude name="**/*.lex"/>
+            <exclude name="**/*.cup"/>
+            <exclude name="**/*.lex"/>
+            <exclude name="**/*.cup"/>
+            <classpath refid="interpretejs.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target name="test">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.AndExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.ArrayExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.DistinctExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.EqualExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.ErrorHandlingTest" todir="${junit.output.dir}"/>
+            <test name="test.FunctionExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.GreaterExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.GreaterOrEqualExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.IfStatementTest" todir="${junit.output.dir}"/>
+            <test name="test.IterationStatementTest" todir="${junit.output.dir}"/>
+            <test name="test.LessExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.LessOrEqualExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.MinusExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.NotExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.NumericTest" todir="${junit.output.dir}"/>
+            <test name="test.ObelusExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.OrExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.PapperTest" todir="${junit.output.dir}"/>
+            <test name="test.PlusExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.ScopeTest" todir="${junit.output.dir}"/>
+            <test name="test.StringLiteralTest" todir="${junit.output.dir}"/>
+            <test name="test.Test" todir="${junit.output.dir}"/>
+            <test name="test.TimesExpressionTest" todir="${junit.output.dir}"/>
+            <test name="test.VarExpressionTest" todir="${junit.output.dir}"/>
+            <classpath refid="interpretejs.classpath"/>
+        </junit>
+    </target>
+    <target name="Tester">
+        <java classname="com.language.Main" failonerror="true" fork="yes">
+            <classpath refid="interpretejs.classpath"/>
+        </java>
+    </target>
+    <target name="EqualExpressionTest (1)">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.EqualExpressionTest" todir="${junit.output.dir}"/>
+            <classpath refid="interpretejs.classpath"/>
+        </junit>
+    </target>
+    <target name="NumericTest (1)">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.NumericTest" todir="${junit.output.dir}"/>
+            <classpath refid="interpretejs.classpath"/>
+        </junit>
+    </target>
+    <target name="PlusExpressionTest (1)">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.PlusExpressionTest" todir="${junit.output.dir}"/>
+            <classpath refid="interpretejs.classpath"/>
+        </junit>
+    </target>
+    <target name="PapperTest (1)">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.PapperTest" todir="${junit.output.dir}"/>
+            <classpath refid="interpretejs.classpath"/>
+        </junit>
+    </target>
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
+    </target>
+    <target name="jar">
+    	<jar destfile="interpreteJS.jar" basedir="bin" >
+        	<manifest>
+        		<attribute name="Main-Class" value="com.language.Main"/>
+        	</manifest>
+		<zipgroupfileset includes="*.jar" dir="lib"/>
+		</jar>
+     </target>
+</project>

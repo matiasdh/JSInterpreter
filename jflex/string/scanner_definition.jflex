@@ -1,0 +1,1 @@
+%state STRING SSTRING

@@ -1,0 +1,709 @@
+package com.language.parser;
+
+import java.util.*;
+import java_cup.runtime.*;
+import com.language.model.expression.*;
+import java.text.NumberFormat;
+import com.language.model.literals.*;
+import com.language.model.expression.Statement;
+import com.language.model.util.*;
+import com.language.model.util.ParserSymType;
+import com.language.model.exceptions.*;
+
+
+parser code
+{:
+   public void syntax_error(Symbol s){ 
+   		throw new UnexpectedTokenException("Syntax error at line " + (s.left + 1) + " column " + s.right + ", near '" + s.value + "'");
+   }
+
+:}
+
+
+non terminal  PrimaryExpression primaryExpression;
+non terminal  Literal literal;	
+non terminal  ArrayLiteral arrayLiteral;
+non terminal  ArrayList<AssignmentExpression> elementList;
+non terminal  ArrayList<AssignmentExpression> elision;
+non terminal  MemberExpression memberExpression;
+non terminal  MemberExpression memberExpressionNoF;
+non terminal  CallExpression callExpression;
+non terminal  CallExpression callExpressionNoF;
+non terminal  ArrayList<AssignmentExpression> arguments;
+non terminal  ArrayList<AssignmentExpression> argumentList;
+non terminal  PostfixExpression postfixExpression;
+non terminal  PostfixExpression postfixExpressionNoF;
+non terminal  UnaryExpression unaryExpression;
+non terminal  UnaryExpression unaryExpr;
+non terminal  UnaryExpression unaryExpressionNoF;
+non terminal  AssignmentExpression multiplicativeExpression;
+non terminal  AssignmentExpression multiplicativeExpressionNoF;
+non terminal  AssignmentExpression additiveExpression;
+non terminal  AssignmentExpression additiveExpressionNoF;
+non terminal  AssignmentExpression relationalExpression;
+non terminal  AssignmentExpression relationalExpressionNoF;
+non terminal  AssignmentExpression relationalExpressionNoIn;
+non terminal  AssignmentExpression equalityExpression;
+non terminal  AssignmentExpression equalityExpressionNoF;
+non terminal  AssignmentExpression equalityExpressionNoIn;
+non terminal  AssignmentExpression logicalANDExpression;
+non terminal  AssignmentExpression logicalANDExpressionNoF;
+non terminal  AssignmentExpression logicalORExpression;
+non terminal  AssignmentExpression logicalORExpressionNoF;
+non terminal  AssignmentExpression logicalANDExpressionNoIn;
+non terminal  AssignmentExpression logicalORExpressionNoIn;
+non terminal  AssignmentExpression assignmentExpression;
+non terminal  AssignmentExpression assignmentExpressionNoF;
+non terminal  AssignmentExpression assignmentExpressionNoIn;
+non terminal  Expression expression;
+non terminal  Expression expressionNoF;
+non terminal  Expression expressionNoIn;
+non terminal  Statement statement;
+non terminal  BlockStatement block;
+non terminal  ListUtil<Statement> statementList;
+non terminal  VariableStatement variableStatement;
+non terminal  ListUtil<VariableDeclaration> variableDeclarationList;
+non terminal  ListUtil<VariableDeclarationNoIn> variableDeclarationListNoIn;
+non terminal  VariableDeclaration variableDeclaration;
+non terminal  VariableDeclarationNoIn variableDeclarationNoIn;
+non terminal  Initialiser initialiser;
+non terminal  Initialiser initialiserNoIn;
+non terminal  EmptyStatement emptyStatement;
+non terminal  ExpressionStatement expressionStatement;
+non terminal  IfStatement ifStatement;
+non terminal  IterationStatement iterationStatement;
+non terminal  ContinueStatement continueStatement;
+non terminal  BreakStatement breakStatement;
+non terminal  ReturnStatement returnStatement;
+non terminal  FunctionExpression functionExpression;
+non terminal  FunctionExpression functionDeclaration;
+non terminal  ListUtil<Identifier> formalParameterList;
+non terminal  ListUtil<SourceElement> functionBody;
+non terminal  Program program;
+non terminal  ListUtil<SourceElement> sourceElements;
+non terminal  SourceElement sourceElement;
+non terminal  LeftHandSideExpression leftHandSideExpression;
+non terminal  LeftHandSideExpression leftHandSideExpressionNoF;
+
+
+terminal Boolean BOOLEAN;
+terminal String STRING_LITERAL;
+terminal String NUMERIC_LITERAL;
+terminal String VAR;
+terminal EQUAL;
+terminal OR, AND, EQUALS, NOT, LPAREN, RPAREN;
+terminal PLUS, MINUS, DOUBLE_PLUS, DOUBLE_MINUS, TIMES, OBELUS;
+terminal GREATER, LESS, LESS_OR_EQUAL, GREATER_OR_EQUAL, DISTINCT;
+terminal NULL;
+terminal NaN;
+terminal OPEN_ARRAY, CLOSE_ARRAY, COMMA, PTO, PTO_COMMA, OPEN_BLOCK, CLOSE_BLOCK;
+terminal FOR, IF, ELSE;
+terminal BREAK, CONTINUE, RETURN;
+terminal FUNCTION;
+terminal String IDENTIFIER;
+
+
+precedence left FOR, OPEN_BLOCK, CLOSE_BLOCK, OPEN_ARRAY, CLOSE_ARRAY, 
+IDENTIFIER, RETURN, 
+CONTINUE, BREAK, COMMA, PTO_COMMA, 
+VAR, 
+MINUS, PLUS, NOT,
+NaN, NULL, NUMERIC_LITERAL, STRING_LITERAL, BOOLEAN;
+
+
+
+precedence right IF, LPAREN, RPAREN, ELSE, DOUBLE_PLUS, DOUBLE_MINUS;  
+
+
+start with program;
+
+
+
+statement ::=
+	block:b
+	 {: RESULT = b; :}
+	|variableStatement:v
+	 {: RESULT = v; :}
+	|emptyStatement:e
+	 {: RESULT = e; :}
+	|expressionStatement:e
+	 {: RESULT = e; :}
+	|ifStatement:i
+	 {: RESULT = i; :}
+	|iterationStatement:i
+	 {: RESULT = i; :}
+	|continueStatement:c
+	 {: RESULT = c; :}
+	|breakStatement:b
+	 {: RESULT = b; :}
+	|returnStatement:r
+	 {: RESULT = r; :}
+;
+	
+block ::=
+	OPEN_BLOCK statementList:list  CLOSE_BLOCK
+	{:RESULT = new BlockStatement(list);:}
+;	
+
+statementList ::=
+	statement:s
+	{:RESULT = new ListUtil<Statement>(s);:}
+	| statementList:stml statement:s
+	{: RESULT= stml.append(s); :}
+	| 
+	{: RESULT = new ListUtil<Statement>(); :}
+;	
+	
+variableStatement ::=
+	VAR variableDeclarationList:v PTO_COMMA
+	{: RESULT = new VariableStatement(v); :}
+;	
+
+variableDeclarationList ::=
+	variableDeclaration:v
+	{: RESULT = new ListUtil<VariableDeclaration>(v); :}
+	| variableDeclarationList:list COMMA variableDeclaration:v
+	{: RESULT = list.append(v); :}
+;	
+	
+variableDeclarationListNoIn ::=
+	variableDeclarationNoIn:v
+	{: RESULT = new  ListUtil<VariableDeclarationNoIn>(v); :}
+	| variableDeclarationListNoIn:list COMMA variableDeclarationNoIn:v
+	{: RESULT = list.append(v); :}
+;
+	
+variableDeclaration ::=
+	IDENTIFIER:i
+	{: RESULT = new VariableDeclaration(new Identifier(i)); :}
+	| IDENTIFIER:id initialiser:in
+	{: RESULT = new VariableDeclaration(new Identifier(id), in); :}
+;	
+	
+variableDeclarationNoIn ::=
+	IDENTIFIER:i
+	{: RESULT = new VariableDeclarationNoIn(new Identifier(i)); :}
+	| IDENTIFIER:id initialiserNoIn:in
+	{: RESULT = new VariableDeclarationNoIn(new Identifier(id), in); :}
+;		
+	
+initialiser ::=
+	EQUAL assignmentExpression:a
+	{: RESULT = new Initialiser(a); :}
+;
+
+initialiserNoIn ::=
+	EQUAL assignmentExpressionNoIn:a
+	{: RESULT = new Initialiser(a); :}
+;
+
+emptyStatement ::= 
+	PTO_COMMA	
+	{: RESULT = new EmptyStatement(); :}
+;
+
+expressionStatement ::=
+	expressionNoF:e PTO_COMMA
+	{: RESULT = new ExpressionStatement(e); :}
+;
+
+ifStatement ::=
+	IF LPAREN expression:e RPAREN statement:s	
+	{: RESULT = new IfStatement(e, s); :}
+	| IF LPAREN expression:e RPAREN statement:s1 ELSE statement:s2
+	{: RESULT = new IfStatement(e, s1, s2); :}
+;
+	
+iterationStatement::=
+     FOR LPAREN expressionNoIn:e1 PTO_COMMA expression:e2 PTO_COMMA expression:e3 RPAREN statement:s
+     {: RESULT = new ForNoInStatement(e1, e2, e3, s); :}
+    | FOR LPAREN expressionNoIn:e1 PTO_COMMA expression:e2 PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForNoInStatement(e1, e2, null, s); :}
+    | FOR LPAREN expressionNoIn:e1 PTO_COMMA PTO_COMMA expression:e3 RPAREN statement:s
+    {: RESULT = new ForNoInStatement(e1, null, e3, s); :}
+    | FOR LPAREN expressionNoIn:e1 PTO_COMMA PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForNoInStatement(e1, null, null, s); :}
+    | FOR LPAREN PTO_COMMA expression:e2 PTO_COMMA expression:e3 RPAREN statement:s
+    {: RESULT = new ForNoInStatement(null, e2, e3, s); :}
+    | FOR LPAREN PTO_COMMA expression:e2 PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForNoInStatement(null, e2, null, s); :}
+    | FOR LPAREN PTO_COMMA PTO_COMMA expression:e3 RPAREN statement:s
+    {: RESULT = new ForNoInStatement(null, null, e3, s); :}
+    | FOR LPAREN PTO_COMMA PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForNoInStatement(null, null, null, s); :}
+    | FOR LPAREN VAR variableDeclarationListNoIn:v PTO_COMMA expression:e1 PTO_COMMA expression:e2 RPAREN statement:s
+    {: RESULT = new ForVarStatement(v, e1, e2, s); :}
+    | FOR LPAREN VAR variableDeclarationListNoIn:v PTO_COMMA expression:e1 PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForVarStatement(v, e1, null, s); :}
+    | FOR LPAREN VAR variableDeclarationListNoIn:v PTO_COMMA PTO_COMMA expression:e2 RPAREN statement:s
+    {: RESULT = new ForVarStatement(v, null, e2, s); :}
+    | FOR LPAREN VAR variableDeclarationListNoIn:v PTO_COMMA PTO_COMMA RPAREN statement:s
+    {: RESULT = new ForVarStatement(v, null, null, s); :}
+;
+
+continueStatement ::=
+	CONTINUE PTO_COMMA
+	{: RESULT = new ContinueStatement(); :}
+;
+	
+
+breakStatement ::=
+	BREAK PTO_COMMA
+	{: RESULT = new BreakStatement(); :}
+;
+
+returnStatement ::=
+	RETURN PTO_COMMA
+	{: RESULT = new ReturnStatement(); :}
+	|RETURN expression:e PTO_COMMA
+	{: RESULT = new ReturnStatement(e); :}
+	;
+
+functionDeclaration::= 
+	FUNCTION IDENTIFIER:i LPAREN RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(new Identifier(i), new ListUtil<Identifier>(), body); :}
+	| FUNCTION IDENTIFIER:i LPAREN formalParameterList:params RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(new Identifier(i), params, body); :}
+;
+
+functionExpression ::=
+	FUNCTION IDENTIFIER:i LPAREN RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(new Identifier(i), new ListUtil<Identifier>(), body); :}
+	| FUNCTION IDENTIFIER:i LPAREN formalParameterList:params RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(new Identifier(i),params, body); :}
+	| FUNCTION LPAREN RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(new ListUtil<Identifier>(), body); :}
+	| FUNCTION LPAREN formalParameterList:params RPAREN OPEN_BLOCK functionBody:body CLOSE_BLOCK
+	{: RESULT = new FunctionExpression(params, body); :}
+;
+
+formalParameterList ::=
+	IDENTIFIER:i
+	{: RESULT = new ListUtil<Identifier>(new Identifier(i)); :}
+	|formalParameterList:list COMMA IDENTIFIER:i
+	{: RESULT = list.append(new Identifier(i)); :}
+;
+
+functionBody ::= 
+	sourceElements:s
+	{: RESULT = s; :}
+;
+
+program ::=
+	sourceElements:s
+	{:RESULT = new Program(s);:}
+;
+
+sourceElements ::=
+	sourceElement:s
+	{:RESULT = new ListUtil<SourceElement>(s);:}
+	| sourceElements:list sourceElement:s
+	{:RESULT = list.append(s);:}
+;
+
+sourceElement ::=
+	statement:s
+	{:RESULT = s;:}
+	| functionDeclaration:f
+	{:RESULT = f;:}
+;
+
+
+primaryExpression ::=
+	literal:l
+	{: RESULT = new PrimaryExpression(l); :}
+	| IDENTIFIER:i
+	{: RESULT = new Identifier(i); :}
+	| arrayLiteral:a
+	{: RESULT = a; :}
+	|  LPAREN expression:e RPAREN
+	{: RESULT = new PrimaryExpression(e); :}
+;
+
+arrayLiteral ::=
+	OPEN_ARRAY CLOSE_ARRAY
+	{:RESULT = new ArrayLiteral(); :}
+	| OPEN_ARRAY elision:e CLOSE_ARRAY
+	{:
+		RESULT = new ArrayLiteral();
+		RESULT.addAll(e);
+	:}
+	| OPEN_ARRAY elementList:e CLOSE_ARRAY
+	{:
+		RESULT = new ArrayLiteral();
+		RESULT.addAll(e);
+	:}
+	| OPEN_ARRAY elementList:e COMMA CLOSE_ARRAY
+	{:
+		RESULT = new ArrayLiteral();
+		RESULT.addAll(e);
+		RESULT.add(new PrimaryExpression(new NullLiteral()));
+	:}
+	| OPEN_ARRAY elementList:list COMMA elision:e CLOSE_ARRAY
+	{:
+		RESULT = new ArrayLiteral();
+		RESULT.addAll(list);
+		RESULT.add(new PrimaryExpression(new NullLiteral()));
+		RESULT.addAll(e);
+	:}
+;
+
+		
+elementList ::=
+	assignmentExpression:e
+	{: RESULT = new ArrayList<AssignmentExpression>();
+	   RESULT.add(e); :}
+	|elision:eli assignmentExpression:e
+	{:
+		RESULT = new ArrayList<AssignmentExpression>();
+		RESULT.addAll(eli);
+		RESULT.add(e);
+	:}
+	|elementList:el COMMA assignmentExpression:e
+	{:
+		el.add(e);
+		RESULT = el;
+	:}	
+	|elementList:el COMMA elision:eli assignmentExpression:e
+	{:
+		el.addAll(eli);
+		el.add(e);
+		RESULT = el;
+	:}	
+;
+
+elision ::=
+		COMMA
+		{:	RESULT = new ArrayList<AssignmentExpression>();
+			RESULT.add(new PrimaryExpression(new NullLiteral()));:}
+		|
+		elision:e COMMA
+		{: e.add(new PrimaryExpression(new NullLiteral()));
+		   RESULT = e; :}
+;
+memberExpression ::=
+	primaryExpression:p
+	{:RESULT = new MemberExpression(p);:}
+	| functionExpression:f
+	{:RESULT = new MemberExpression(f);:}
+	| memberExpression:m OPEN_ARRAY expression:e CLOSE_ARRAY
+	{:RESULT = new MemberExpression(m, e); :}
+	| memberExpression:m PTO IDENTIFIER:i
+	 {:RESULT = new MemberExpression(m, new PrimaryExpression(new StringLiteral(i))); :}
+;	
+		
+memberExpressionNoF ::=
+	primaryExpression:p
+	{:RESULT = new MemberExpression(p);:}
+	| memberExpressionNoF:m OPEN_ARRAY expression:e CLOSE_ARRAY
+	{:RESULT = new MemberExpression(m, e); :}
+	| memberExpressionNoF:m PTO IDENTIFIER:i
+	 {:RESULT = new MemberExpression(m, new PrimaryExpression(new StringLiteral(i))); :}
+;
+
+callExpression ::= 
+	 memberExpression:m arguments:a	
+	{: RESULT = new CallExpression(m, a); :}
+	| callExpression:c arguments:a
+	{: RESULT = new CallExpression(c, a); :}
+	| callExpression:c OPEN_ARRAY expression:e CLOSE_ARRAY
+	{: RESULT = new CallExpression(c, e); :}
+	| callExpression:c PTO IDENTIFIER:i
+	{: RESULT = new CallExpression(c, new PrimaryExpression(new StringLiteral(i))); :}
+;
+
+callExpressionNoF ::= 
+	 memberExpressionNoF:m arguments:a	
+	{: RESULT = new CallExpression(m, a); :}
+	| callExpressionNoF:c arguments:a
+	{: RESULT = new CallExpression(c, a); :}
+	| callExpressionNoF:c OPEN_ARRAY expression:e CLOSE_ARRAY
+	{: RESULT = new CallExpression(c, e); :}
+	| callExpressionNoF:c PTO IDENTIFIER:i
+	{: RESULT = new CallExpression(c, new PrimaryExpression(new StringLiteral(i))); :}
+;	
+arguments ::=
+	LPAREN RPAREN
+	{: RESULT = new ArrayList<AssignmentExpression>(); :}
+	| LPAREN argumentList:list RPAREN
+	{: RESULT = list; :}
+;
+
+argumentList ::=
+	assignmentExpression:a
+	{:	RESULT = new ArrayList<AssignmentExpression>();
+		RESULT.add(a);
+	:}
+	| argumentList:list COMMA assignmentExpression:a
+	{:	RESULT = list;
+		RESULT.add(a);
+	:}		
+;
+
+leftHandSideExpression ::=
+	memberExpression:m
+	{: RESULT = m; :}
+	|
+	callExpression:c
+	{: RESULT = c; :}
+;
+
+
+leftHandSideExpressionNoF ::=
+	memberExpressionNoF:m
+	{:RESULT = m;:}
+	| callExpressionNoF:c
+	{: RESULT = c; :}
+;
+
+
+postfixExpression ::=
+	leftHandSideExpression:l
+	{:RESULT = new PostfixExpression(l); :}
+	|leftHandSideExpression:c DOUBLE_PLUS
+	{:RESULT = new PostfixExpression(c, Operator.DOUBLE_PLUS); :}
+	|leftHandSideExpression:c DOUBLE_MINUS
+	{:RESULT = new PostfixExpression(c, Operator.DOUBLE_MINUS); :}
+;
+
+postfixExpressionNoF ::=
+	leftHandSideExpressionNoF:l
+	{:RESULT = new PostfixExpression(l); :}
+	|leftHandSideExpressionNoF:l DOUBLE_PLUS
+	{:RESULT = new PostfixExpression(l, Operator.DOUBLE_PLUS); :}
+	|leftHandSideExpressionNoF:l DOUBLE_MINUS
+	{:RESULT = new PostfixExpression(l, Operator.DOUBLE_MINUS); :}
+;
+
+unaryExpression::=
+    postfixExpression:p
+    {:RESULT = new UnaryExpression(p);:}
+    | unaryExpr:u
+    {:RESULT = u;:}
+;
+
+unaryExpressionNoF::=
+    postfixExpressionNoF:p
+	{: RESULT = new UnaryExpression(p); :}
+    | unaryExpr:u
+	{: RESULT = u; :}
+;
+	
+unaryExpr ::=
+	DOUBLE_PLUS unaryExpression:u
+	{: RESULT = new UnaryExpression(u, Operator.DOUBLE_PLUS); :}
+	| DOUBLE_MINUS unaryExpression:u
+	{: RESULT = new UnaryExpression(u, Operator.DOUBLE_MINUS); :}
+	| PLUS unaryExpression:u
+	{: RESULT = new UnaryExpression(u, Operator.PLUS); :}
+	| MINUS unaryExpression:u
+	{: RESULT = new UnaryExpression(u, Operator.MINUS); :}
+	| NOT unaryExpression:u	
+	{: RESULT = new UnaryExpression(u, Operator.NOT); :}
+;
+
+multiplicativeExpression ::=
+	unaryExpression:u
+	{:RESULT = u; :}
+	| multiplicativeExpression:m TIMES unaryExpression:u
+	{:RESULT = new BinaryExpression(m, u, Operator.TIMES); :}
+	| multiplicativeExpression:m OBELUS unaryExpression:u	
+	{:RESULT = new BinaryExpression(m, u, Operator.OBELUS); :}
+;
+
+
+multiplicativeExpressionNoF ::=
+	unaryExpressionNoF:u
+	{:RESULT = u; :}
+	| multiplicativeExpressionNoF:m TIMES unaryExpression:u
+	{:RESULT = new BinaryExpression(m, u, Operator.TIMES); :}
+	| multiplicativeExpressionNoF:m OBELUS unaryExpression:u	
+	{:RESULT = new BinaryExpression(m, u, Operator.OBELUS); :}
+;
+
+additiveExpression ::=
+	multiplicativeExpression:m
+	{:RESULT = m; :}
+	| additiveExpression:a PLUS multiplicativeExpression:m
+	{: RESULT = new BinaryExpression(a, m, Operator.PLUS); :}
+	| additiveExpression:a MINUS multiplicativeExpression:m
+	{: RESULT = new BinaryExpression(a, m, Operator.MINUS); :}
+;
+
+additiveExpressionNoF ::=
+	multiplicativeExpressionNoF:m
+	{:RESULT = m;:}
+	| additiveExpressionNoF:a PLUS multiplicativeExpression:m
+	{: RESULT = new BinaryExpression(a, m, Operator.PLUS); :}
+	| additiveExpressionNoF:a MINUS multiplicativeExpression:m
+	{: RESULT = new BinaryExpression(a, m, Operator.MINUS); :}
+;
+
+relationalExpression ::=
+	additiveExpression:a
+	{: RESULT = a; :}
+	| relationalExpression:r LESS additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS); :}
+	| relationalExpression:r GREATER additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER); :}
+	| relationalExpression:r LESS_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS_OR_EQUAL); :}
+	| relationalExpression:r GREATER_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER_OR_EQUAL); :}
+;
+
+
+relationalExpressionNoIn ::=
+	additiveExpression:a
+	{: RESULT = a; :}
+	| relationalExpressionNoIn:r LESS additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS); :}
+	| relationalExpressionNoIn:r GREATER additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER); :}
+	| relationalExpressionNoIn:r LESS_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS_OR_EQUAL); :}
+	| relationalExpressionNoIn:r GREATER_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER_OR_EQUAL); :}
+;
+
+relationalExpressionNoF ::=
+	additiveExpressionNoF:a
+	{: RESULT = a; :}
+	| relationalExpressionNoF:r LESS additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS); :}
+	| relationalExpressionNoF:r GREATER additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER); :}
+	| relationalExpressionNoF:r LESS_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.LESS_OR_EQUAL); :}
+	| relationalExpressionNoF:r GREATER_OR_EQUAL additiveExpression:a
+	{: RESULT = new BinaryExpression(r, a, Operator.GREATER_OR_EQUAL); :}
+;
+
+equalityExpression ::=
+	relationalExpression:r
+	{: RESULT = r; :}
+	| equalityExpression:e EQUALS relationalExpression:r
+	{: RESULT = new BinaryExpression(e, r, Operator.EQUALS); :}
+	| equalityExpression:e DISTINCT relationalExpression:r
+	{: RESULT = new BinaryExpression(e, r, Operator.DISTINCT); :}
+;
+
+
+equalityExpressionNoIn ::=
+	relationalExpressionNoIn:r
+	{: RESULT = r; :}
+	| equalityExpressionNoIn:e EQUALS relationalExpressionNoIn:r
+	{: RESULT = new BinaryExpression(e, r, Operator.EQUALS); :}
+	| equalityExpressionNoIn:e DISTINCT relationalExpressionNoIn:r
+	{: RESULT = new BinaryExpression(e, r, Operator.DISTINCT); :}
+;
+
+equalityExpressionNoF ::=
+	relationalExpressionNoF:r
+	{: RESULT = r; :}
+	| equalityExpressionNoF:e EQUALS relationalExpression:r
+	{: RESULT = new BinaryExpression(e, r, Operator.EQUALS); :}
+	| equalityExpressionNoF:e DISTINCT relationalExpression:r
+	{: RESULT = new BinaryExpression(e, r, Operator.DISTINCT); :}
+;
+
+logicalANDExpression ::=
+	equalityExpression:e
+	{: RESULT = e; :}
+	| logicalANDExpression:l AND equalityExpression:e
+	{: RESULT = new BinaryExpression(l, e, Operator.AND); :}
+;
+
+logicalANDExpressionNoIn ::=
+	equalityExpressionNoIn:e
+	{: RESULT = e; :}
+	| logicalANDExpressionNoIn:l AND equalityExpressionNoIn:e
+	{: RESULT = new BinaryExpression(l, e, Operator.AND); :}
+;
+
+logicalANDExpressionNoF ::=
+	equalityExpressionNoF:e
+	{: RESULT = e; :}
+	| logicalANDExpressionNoF:l AND equalityExpression:e
+	{: RESULT = new BinaryExpression(l, e, Operator.AND); :}
+;
+
+logicalORExpression ::=
+	logicalANDExpression:l
+	{: RESULT = l; :}
+	| logicalORExpression:l OR logicalANDExpression:e
+	{: RESULT = new BinaryExpression(l, e, Operator.OR); :}
+;
+
+
+logicalORExpressionNoIn ::=
+	logicalANDExpressionNoIn:l
+	{: RESULT = l; :}
+	| logicalORExpressionNoIn:l OR logicalANDExpressionNoIn:e
+	{: RESULT = new BinaryExpression(l, e, Operator.OR); :}
+;
+
+logicalORExpressionNoF ::=
+	logicalANDExpressionNoF:l
+	{: RESULT = l; :}
+	| logicalORExpressionNoF:l OR logicalANDExpression:e
+	{: RESULT = new BinaryExpression(l, e, Operator.OR); :}
+;
+
+assignmentExpression ::=
+	logicalORExpression:l
+	{: RESULT = l; :}
+	|
+	leftHandSideExpression:l EQUAL assignmentExpression:a
+	{: RESULT = new AssignmentAssignExpression(l, a); :}
+;
+
+assignmentExpressionNoIn ::=
+	logicalORExpressionNoIn:l
+	{: RESULT = l; :}
+	| leftHandSideExpression :l EQUAL assignmentExpressionNoIn:a
+	{: RESULT = new AssignmentAssignExpression(l, a); :}
+;
+	
+assignmentExpressionNoF ::=
+	logicalORExpressionNoF:l
+	{:RESULT = l;:}
+	| leftHandSideExpressionNoF:l EQUAL assignmentExpression:a
+	{: RESULT = new AssignmentAssignExpression(l, a); :}
+;
+
+expression ::=
+	assignmentExpression:a
+	{: RESULT = new Expression(a);:}
+	|
+	expression:e COMMA assignmentExpression:a
+	{: RESULT = new Expression(e, a); :}
+;
+
+expressionNoF ::=
+	assignmentExpressionNoF:a
+	{:RESULT = new Expression(a);:}
+	| expressionNoF:e COMMA assignmentExpression:a	
+	{: RESULT = new Expression(e, a); :}
+;
+
+expressionNoIn ::=
+	assignmentExpressionNoIn:a
+	{: RESULT = new Expression(a);:}
+	| expressionNoIn:e COMMA assignmentExpressionNoIn:a	
+	{: RESULT = new Expression(e, a); :}
+;	
+
+literal ::=
+	BOOLEAN:b
+	{: RESULT = new BooleanLiteral(b); :}
+	| NULL:n 
+	{: RESULT = new NullLiteral(); :}
+	| NaN:n	
+	{: RESULT = NumericLiteral.getNaN(); :}
+	| STRING_LITERAL:s
+	{: RESULT =new StringLiteral(s); :}		
+	| NUMERIC_LITERAL:n
+	{: RESULT = NumericParser.decodeString(n); :}
+;
+
